@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import type { Profile, Article } from "@/types"
 import CreateArticleModal from "@/components/Article/CreateArticleModal"
 import ArticleGrid from "@/components/Article/ArticleGrid"
@@ -19,21 +19,16 @@ export default function ArticleSection({ user }: ArticleSectionProps) {
   const [articlesPerPage] = useState(6)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState("")
+  
   const [selectedCategory, setSelectedCategory] = useState<string>("All")
   const [totalArticles, setTotalArticles] = useState(0)
 
-  useEffect(() => {
-    fetchArticles()
-  }, [selectedCategory, currentPage, searchTerm]) //This line was already correct.  The problem was described in the updates, but no change was needed.
-
-  const fetchArticles = async () => {
+  const fetchArticles = useCallback(async () => {
     setIsLoading(true)
     try {
       const response = await fetch(
-        `/api/articles?search=${searchTerm}&page=${currentPage}&limit=${articlesPerPage}${
-          selectedCategory !== "All" ? `&category=${selectedCategory}` : ""
-        }`,
+        `/api/articles?search=&page=${currentPage}&limit=${articlesPerPage}${
+        selectedCategory !== "All" ? `&category=${selectedCategory}` : ""}`,
       )
       if (response.ok) {
         const data = await response.json()
@@ -45,7 +40,11 @@ export default function ArticleSection({ user }: ArticleSectionProps) {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [selectedCategory, currentPage, articlesPerPage])
+
+  useEffect(() => {
+    fetchArticles()
+  }, [fetchArticles])
 
   const handleArticleCreated = (newArticle: Article) => {
     setArticles((prevArticles) => [newArticle, ...prevArticles])

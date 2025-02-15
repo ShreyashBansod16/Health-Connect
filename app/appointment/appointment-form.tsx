@@ -206,7 +206,8 @@ const AppointmentForm = ({
 }
 
 export default function App({ user }: { user: User }) {
-  const [_appointments, setAppointments] = useState<Appointment[]>([])
+  const setAppointments = useState<Appointment[]>([])[1]
+
 
   useEffect(() => {
     async function fetchAppointments() {
