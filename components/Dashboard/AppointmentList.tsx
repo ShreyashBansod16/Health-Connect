@@ -33,7 +33,7 @@ export default function AppointmentList({ user }: AppointmentListProps) {
 
   const fetchAppointments = async () => {
     try {
-      const response = await fetch(`/api/doctor?userId=${user.id}`);
+      const response = await fetch(`/api/doctor ?userId=${user.id}`);
       const data = await response.json();
       if (response.ok) {
         setAppointments(data);

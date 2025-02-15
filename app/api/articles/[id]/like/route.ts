@@ -7,7 +7,7 @@ export async function POST(
 ) {
   try {
     const { userId } = await request.json();
-    const { id: articleId } = await params;
+    const { id: articleId } = params;
 
     if (!userId) {
       return NextResponse.json(
@@ -64,19 +64,11 @@ export async function POST(
       });
     }
 
-    // Create new like
-    const newLike = await prisma.like.create({
+    // Create new like (without storing it in a variable)
+    await prisma.like.create({
       data: {
         articleId: articleId,
         userId: profile.userId,
-      },
-      include: {
-        user: {
-          select: {
-            username: true,
-            avatarUrl: true,
-          },
-        },
       },
     });
 
