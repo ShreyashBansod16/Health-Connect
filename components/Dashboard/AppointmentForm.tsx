@@ -44,13 +44,7 @@ const bookAppointment = async (appointmentData: Appointment): Promise<Appointmen
   return response.json();
 };
 
-export default function AppointmentForm({
-  user,
-  onAppointmentBooked,
-}: {
-  user: User;
-  onAppointmentBooked: () => void;
-}) {
+export default function AppointmentForm({ user, onAppointmentBooked }: { user: User; onAppointmentBooked: () => void }) {
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [doctorId, setDoctorId] = useState("");
@@ -58,7 +52,7 @@ export default function AppointmentForm({
 
   const queryClient = useQueryClient();
 
-  useQuery<Doctor[], Error>({ queryKey: ["doctors"], queryFn: fetchDoctors });
+  const { data: doctors = [] } = useQuery<Doctor[], Error>({ queryKey: ["doctors"], queryFn: fetchDoctors });
 
   const bookAppointmentMutation = useMutation<Appointment, Error, Appointment>({
     mutationFn: bookAppointment,
@@ -136,7 +130,16 @@ export default function AppointmentForm({
           </Select>
 
           <Label>Doctor</Label>
-          <Input type="text" placeholder="Search for a doctor" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+          <Select value={doctorId} onValueChange={setDoctorId}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select a doctor" />
+            </SelectTrigger>
+            <SelectContent>
+              {doctors.filter((doctor) => doctor.name.toLowerCase().includes(searchQuery.toLowerCase())).map((doctor) => (
+                <SelectItem key={doctor.id} value={doctor.id}>{doctor.name} ({doctor.specialization})</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           <Button onClick={handleBookAppointment} disabled={bookAppointmentMutation.isPending}>
             {bookAppointmentMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Book Appointment"}

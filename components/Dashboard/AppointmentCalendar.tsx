@@ -62,7 +62,7 @@ export default function AppointmentCalendar({ user }: { user: User }) {
     [currentDate]
   );
 
-  const { data: appointments, isLoading, error } = useQuery<Appointment[]>({
+  const { data: appointments, isLoading, error } = useQuery({
     queryKey: ["appointments", user.id, start.toISOString(), end.toISOString()],
     queryFn: () => fetchAppointments(user.id, start.toISOString(), end.toISOString()),
     staleTime: 5 * 60 * 1000, // 5 minutes
