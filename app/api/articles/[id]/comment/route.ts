@@ -1,14 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// ✅ Correct type for dynamic route parameters
-interface Context {
-  params: { id: string };
-}
-
-export async function POST(request: Request, context: Context) {
+export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { id } = context.params;
+    const { id } = params;
     const { content, userId } = await request.json();
 
     if (!content || !userId) {
@@ -55,10 +50,9 @@ export async function POST(request: Request, context: Context) {
   }
 }
 
-// ✅ Fixed GET handler
-export async function GET(request: Request, context: Context) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { id: articleId } = context.params; // ✅ Corrected
+    const { id: articleId } = params;
 
     const comments = await prisma.comment.findMany({
       where: { articleId, parentId: null },
