@@ -1,14 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-interface Context {
-  params: { id: string };
-}
-
-// ✅ Fix: Correct parameter handling in App Router
-export async function POST(request: Request, context: Context) {
+// ✅ Correct type for dynamic route parameters
+export async function POST(request: Request,
+  { params }: { params: { id: string } }) {
   try {
-    const { id } = context.params;
+    const { id } = params;
     const { content, userId } = await request.json();
 
     if (!content || !userId) {
@@ -55,16 +52,14 @@ export async function POST(request: Request, context: Context) {
   }
 }
 
-// ✅ Fix: Correctly define GET with proper context handling
-export async function GET(_request: Request, context: Context) {
+// ✅ Correct GET handler
+export async function GET( request: Request, { params }: { params: { id: string } }) {
+  console.log(request)
   try {
-    const { id } = context.params;
+    const { id } = params;
 
     const comments = await prisma.comment.findMany({
-      where: { 
-        articleId: id,
-        parentId: null 
-      },
+      where: { articleId: id, parentId: null },
       include: {
         user: {
           select: {
@@ -73,9 +68,7 @@ export async function GET(_request: Request, context: Context) {
           },
         },
       },
-      orderBy: { 
-        createdAt: "desc",
-      },
+      orderBy: { createdAt: "desc" },
     });
 
     return NextResponse.json({ success: true, data: comments });
