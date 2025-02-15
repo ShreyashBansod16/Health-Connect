@@ -1,14 +1,12 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Calendar, dateFnsLocalizer } from "react-big-calendar";
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import { enUS } from "date-fns/locale/en-US";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 
-const locales = {
-  "en-US": enUS,
-};
+const locales = { "en-US": enUS };
 
 const localizer = dateFnsLocalizer({
   format,
@@ -30,32 +28,43 @@ interface Appointment {
   doctorId: string;
 }
 
+interface APIAppointment {
+  id: string;
+  date: string;
+  time: string;
+  doctorId: string;
+}
+
+interface Doctor {
+  id: string;
+  name: string;
+}
+
 export default function AppointmentCalendar({ user }: { user: User }) {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  async function fetchAppointments() {
+  const fetchAppointments = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
       const response = await fetch(`/api/doctor?userId=${user.id}`);
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
+      if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
 
-      const data = await response.json();
+      const data: APIAppointment[] = await response.json();
 
       const formattedAppointments = await Promise.all(
-        data.map(async (appointment: any) => {
+        data.map(async (appointment) => {
           let doctorName = "Unknown";
           if (appointment.doctorId) {
             try {
-              const doctorResponse = await fetch(`/api/appointmnet`);
+              const doctorResponse = await fetch(`/api/appointment`);
               if (doctorResponse.ok) {
-                const doctorData = await doctorResponse.json();
-                doctorName = doctorData[0]?.name || "Unknown";
+                const doctorData: Doctor[] = await doctorResponse.json();
+                const doctor = doctorData.find((doc) => doc.id === appointment.doctorId);
+                doctorName = doctor?.name || "Unknown";
               }
             } catch (error) {
               console.error("Error fetching doctor details:", error);
@@ -79,11 +88,11 @@ export default function AppointmentCalendar({ user }: { user: User }) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [user.id]);
 
   useEffect(() => {
     fetchAppointments();
-  }, []);
+  }, [fetchAppointments]);
 
   return (
     <div className="h-[600px] bg-white p-4 rounded-lg shadow">

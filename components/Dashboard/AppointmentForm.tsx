@@ -27,7 +27,7 @@ interface Appointment {
 }
 
 const fetchDoctors = async (): Promise<Doctor[]> => {
-  const response = await fetch("/api/appointmnet");
+  const response = await fetch("/api/appointment"); // ✅ Fixed typo
   if (!response.ok) throw new Error("Failed to fetch doctors");
   return response.json();
 };
@@ -48,7 +48,7 @@ export default function AppointmentForm({ user, onAppointmentBooked }: { user: U
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [doctorId, setDoctorId] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(""); // ✅ Now used in input field
 
   const queryClient = useQueryClient();
 
@@ -67,6 +67,8 @@ export default function AppointmentForm({ user, onAppointmentBooked }: { user: U
   });
 
   const generateTimeSlots = useCallback(() => {
+    if (!date) return [];
+
     const slots = [];
     const now = new Date();
     const currentDate = parseISO(date);
@@ -128,6 +130,9 @@ export default function AppointmentForm({ user, onAppointmentBooked }: { user: U
               ))}
             </SelectContent>
           </Select>
+
+          <Label>Search Doctor</Label> {/* ✅ Now search input is used */}
+          <Input type="text" placeholder="Search doctor..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
 
           <Label>Doctor</Label>
           <Select value={doctorId} onValueChange={setDoctorId}>

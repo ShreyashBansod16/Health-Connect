@@ -54,23 +54,22 @@ const fetchAppointments = async (userId: string, start: string, end: string): Pr
 export default function AppointmentCalendar({ user }: { user: User }) {
   const [currentDate, setCurrentDate] = useState(new Date());
 
-  const { start, end } = useMemo(
-    () => ({
+  const memoizedDates = useMemo(() => {
+    return {
       start: startOfMonth(currentDate),
       end: endOfMonth(currentDate),
-    }),
-    [currentDate]
-  );
+    };
+  }, [currentDate]); // ✅ Keeps useMemo dependencies clean
 
   const { data: appointments, isLoading, error } = useQuery({
-    queryKey: ["appointments", user.id, start.toISOString(), end.toISOString()],
-    queryFn: () => fetchAppointments(user.id, start.toISOString(), end.toISOString()),
+    queryKey: ["appointments", user.id, memoizedDates.start.toISOString(), memoizedDates.end.toISOString()],
+    queryFn: () => fetchAppointments(user.id, memoizedDates.start.toISOString(), memoizedDates.end.toISOString()),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const handleNavigate = (newDate: Date) => setCurrentDate(newDate);
 
-  const CustomToolbar = ({ onNavigate }: { onNavigate: (action: NavigateAction) => void }) => (
+  const CustomToolbar = () => (
     <div className="flex justify-between items-center mb-4 sm:mb-6 py-2 border-b border-gray-200 dark:border-gray-700">
       <div className="flex space-x-1 sm:space-x-2">
         <button onClick={() => handleNavigate(subMonths(currentDate, 1))} className="toolbar-button">
