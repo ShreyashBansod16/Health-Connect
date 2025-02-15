@@ -9,7 +9,6 @@ import { useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import Image from "next/image";
 
-// Define a type for form values
 interface FormValues {
   email: string;
   password: string;
@@ -19,8 +18,8 @@ export function LoginForm({
   login,
   signup,
 }: {
-  login: (formData: FormData) => void;
-  signup: (formData: FormData) => void;
+  login: (formData: FormData) => Promise<{ error?: string }>; 
+  signup: (formData: FormData) => Promise<{ error?: string }>;
 }) {
   const [isSignup, setIsSignup] = useState(false);
 
@@ -31,21 +30,25 @@ export function LoginForm({
     },
   });
 
-  // Define onSubmit with proper type
   const onSubmit: SubmitHandler<FormValues> = async (values) => {
     const formData = new FormData();
     formData.append("email", values.email);
     formData.append("password", values.password);
 
+    let response;
     if (isSignup) {
-      await signup(formData);
+      response = await signup(formData);
     } else {
-      await login(formData);
+      response = await login(formData);
+    }
+
+    if (response.error) {
+      form.setError("email", { type: "manual", message: response.error });
     }
   };
 
   return (
-    <div className={cn("flex flex-col gap-6 p-4 sm:p-6 justify-center items-center")}>
+    <div className={cn("flex flex-col gap-6 p-4 sm:p-6 justify-center items-center")}> 
       <Card className="overflow-hidden bg-white dark:bg-gray-900 rounded-lg shadow w-full">
         <CardContent className="grid p-0 md:grid-cols-2">
           <form
@@ -73,6 +76,9 @@ export function LoginForm({
                   placeholder="m@example.com"
                   {...form.register("email", { required: true })}
                 />
+                <p className="text-red-600 min-h-[1rem]">
+                  {form.formState.errors.email?.message || ""}
+                </p>
               </div>
               <div className="grid gap-2">
                 <div className="flex items-center justify-between">

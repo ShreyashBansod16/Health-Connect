@@ -5,7 +5,6 @@ import { FileText, PlusCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-// Interface for a medical record
 interface MedicalRecord {
   id: string;
   title: string;
@@ -13,7 +12,6 @@ interface MedicalRecord {
   description: string;
 }
 
-// Mock function to fetch medical records (replace with real API call)
 const fetchMedicalRecords = async (userId: string): Promise<MedicalRecord[]> => {
   console.log("Fetching medical records for user:", userId);
   return new Promise((resolve) => {
@@ -40,28 +38,28 @@ export default function RecentMedicalRecords({ user }: { user: User }) {
   }, [user]);
 
   return (
-    <Card className="h-[calc(100vh-10rem)] shadow-xl rounded-xl bg-white dark:bg-gray-800">
+    <Card className="h-auto sm:h-[calc(100vh-10rem)] shadow-xl rounded-xl bg-white dark:bg-gray-800 w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-3xl xl:max-w-4xl mx-auto p-4 sm:p-6">
       <CardHeader>
-        <CardTitle className="flex items-center justify-between text-gray-800 dark:text-gray-200">
+        <CardTitle className="flex flex-col sm:flex-row items-start sm:items-center justify-between text-gray-800 dark:text-gray-200">
           <div className="flex items-center gap-2">
-            <div className="flex-shrink-0 mr-4 p-2 bg-gray-100 dark:bg-gray-700 rounded-full">
+            <div className="flex-shrink-0 mr-2 sm:mr-4 p-2 bg-gray-100 dark:bg-gray-700 rounded-full">
               <FileText className="h-5 w-5 text-blue-500" />
             </div>
-            Recent Medical Records for {user.email}
+            <span className="text-sm sm:text-base">Recent Medical Records for {user.email}</span>
           </div>
           <Button
             variant="outline"
             size="sm"
-            className="text-blue-600 dark:text-blue-400 border-blue-600 dark:border-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900"
+            className="text-blue-600 dark:text-blue-400 border-blue-600 dark:border-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 mt-2 sm:mt-0"
           >
             <PlusCircle className="h-4 w-4 mr-2" />
             Add Record
           </Button>
         </CardTitle>
       </CardHeader>
-      <CardContent className="h-[calc(100%-5rem)] overflow-auto">
+      <CardContent className="h-auto sm:h-[calc(100%-5rem)] overflow-auto">
         {loading ? (
-          <p className="text-gray-500 dark:text-gray-400">Loading records...</p>
+          <p className="text-gray-500 dark:text-gray-400 text-center">Loading records...</p>
         ) : records.length > 0 ? (
           <ul className="space-y-4">
             {records.map((record) => (
@@ -73,7 +71,7 @@ export default function RecentMedicalRecords({ user }: { user: User }) {
             ))}
           </ul>
         ) : (
-          <p className="text-gray-500 dark:text-gray-400">No medical records found.</p>
+          <p className="text-gray-500 dark:text-gray-400 text-center">No medical records found.</p>
         )}
       </CardContent>
     </Card>
