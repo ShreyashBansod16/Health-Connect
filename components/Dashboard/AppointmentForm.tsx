@@ -230,4 +230,3 @@ export default function AppointmentForm({
     </motion.div>
   )
 }
-

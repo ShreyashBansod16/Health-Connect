@@ -21,6 +21,7 @@ export default function DoctorsPage() {
       setDoctorName("");
       setSpecialization("");
     } catch (error) {
+      console.error("Failed to add doctor:", error);
       alert("Error adding doctor!");
     } finally {
       setLoading(false);

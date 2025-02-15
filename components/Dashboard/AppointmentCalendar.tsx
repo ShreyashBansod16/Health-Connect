@@ -10,9 +10,7 @@ import { motion } from "framer-motion"
 import { useQuery } from "@tanstack/react-query"
 import { Loader2, ChevronLeft, ChevronRight } from "lucide-react"
 
-const locales = {
-  "en-US": enUS,
-}
+const locales = { "en-US": enUS }
 
 const localizer = dateFnsLocalizer({
   format,
@@ -30,38 +28,30 @@ interface Appointment {
   doctorName: string
 }
 
-const fetchAppointments = async (userId: string, start: string, end: string) => {
+const fetchAppointments = async (userId: string, start: string, end: string): Promise<Appointment[]> => {
   const response = await fetch(`/api/doctor?userId=${userId}&start=${start}&end=${end}`)
-  if (!response.ok) {
-    throw new Error(`Error ${response.status}: ${response.statusText}`)
-  }
-  return response.json()
+  if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`)
+  
+  const data = await response.json()
+  return data.map((appointment: any) => ({
+    id: appointment.id,
+    title: `Appointment with Dr. ${appointment.doctor.name}`,
+    start: new Date(`${appointment.date}T${appointment.time}`),
+    end: new Date(`${appointment.date}T${appointment.time}`),
+    doctorName: appointment.doctor.name,
+  }))
 }
 
 export default function AppointmentCalendar({ user }: { user: User }) {
   const [currentDate, setCurrentDate] = useState(new Date())
 
   const { start, end } = useMemo(() => {
-    const start = startOfMonth(currentDate)
-    const end = endOfMonth(currentDate)
-    return { start, end }
+    return { start: startOfMonth(currentDate), end: endOfMonth(currentDate) }
   }, [currentDate])
 
-  const {
-    data: appointments,
-    isLoading,
-    error,
-  } = useQuery({
+  const { data: appointments, isLoading, error } = useQuery({
     queryKey: ["appointments", user.id, start.toISOString(), end.toISOString()],
     queryFn: () => fetchAppointments(user.id, start.toISOString(), end.toISOString()),
-    select: (data) =>
-      data.map((appointment: any) => ({
-        id: appointment.id,
-        title: `Appointment with Dr. ${appointment.doctor.name}`,
-        start: new Date(`${appointment.date}T${appointment.time}`),
-        end: new Date(`${appointment.date}T${appointment.time}`),
-        doctorName: appointment.doctor.name,
-      })),
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
 
@@ -69,55 +59,49 @@ export default function AppointmentCalendar({ user }: { user: User }) {
     setCurrentDate(newDate)
   }
 
-  const CustomToolbar = ({ onNavigate }: any) => {
-    return (
-      <div className="flex justify-between items-center mb-4 sm:mb-6 py-2 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex space-x-1 sm:space-x-2">
-          <button
-            onClick={() => {
-              onNavigate("PREV")
-              handleNavigate(subMonths(currentDate, 1))
-            }}
-            className="p-1 sm:p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
-          >
-            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-          </button>
-          <button
-            onClick={() => {
-              onNavigate("NEXT")
-              handleNavigate(addMonths(currentDate, 1))
-            }}
-            className="p-1 sm:p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
-          >
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
-          </button>
-        </div>
-        <div className="text-center">
-          <span className="text-base sm:text-xl font-bold text-gray-800 dark:text-gray-200">
-            {format(currentDate, "MMMM yyyy")}
-          </span>
-        </div>
+  const CustomToolbar = ({ onNavigate }: { onNavigate: (action: "PREV" | "NEXT" | "TODAY") => void }) => (
+    <div className="flex justify-between items-center mb-4 sm:mb-6 py-2 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex space-x-1 sm:space-x-2">
         <button
           onClick={() => {
-            handleNavigate(new Date())
+            onNavigate("PREV")
+            handleNavigate(subMonths(currentDate, 1))
           }}
-          className="px-2 py-1 sm:px-4 sm:py-2 text-sm sm:text-base bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors duration-200"
+          className="p-1 sm:p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
         >
-          Today
+          <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+        </button>
+        <button
+          onClick={() => {
+            onNavigate("NEXT")
+            handleNavigate(addMonths(currentDate, 1))
+          }}
+          className="p-1 sm:p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
+        >
+          <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
       </div>
-    )
-  }
+      <div className="text-center">
+        <span className="text-base sm:text-xl font-bold text-gray-800 dark:text-gray-200">
+          {format(currentDate, "MMMM yyyy")}
+        </span>
+      </div>
+      <button
+        onClick={() => handleNavigate(new Date())}
+        className="px-2 py-1 sm:px-4 sm:py-2 text-sm sm:text-base bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors duration-200"
+      >
+        Today
+      </button>
+    </div>
+  )
 
-  const eventStyleGetter = () => {
-    return {
-      style: {
-        backgroundColor: "transparent",
-        border: "none",
-      },
-      className: "bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-md px-2 py-1",
-    }
-  }
+  const eventStyleGetter = () => ({
+    style: {
+      backgroundColor: "transparent",
+      border: "none",
+    },
+    className: "bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-md px-2 py-1",
+  })
 
   return (
     <motion.div
@@ -147,8 +131,8 @@ export default function AppointmentCalendar({ user }: { user: User }) {
             defaultView="month"
             date={currentDate}
             onNavigate={handleNavigate}
-            tooltipAccessor={(event: Appointment) => event.title}
-            onSelectEvent={(event: Appointment) => alert(`${event.title} at ${format(event.start, "p")}`)}
+            tooltipAccessor={(event) => event.title}
+            onSelectEvent={(event) => alert(`${event.title} at ${format(event.start, "p")}`)}
             eventPropGetter={eventStyleGetter}
             className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-xs sm:text-sm"
             components={{
@@ -165,7 +149,7 @@ export default function AppointmentCalendar({ user }: { user: User }) {
   )
 }
 
-const CustomHeader = ({ label }: { date: Date; label: string }) => (
+const CustomHeader = ({ label }: { label: string }) => (
   <div className="text-center py-1 sm:py-2 font-semibold text-xs sm:text-sm uppercase text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700">
     {label}
   </div>
@@ -186,4 +170,3 @@ const CustomDateHeader = ({ date, label }: { date: Date; label: string }) => (
 function isSameMonth(date1: Date, date2: Date) {
   return date1.getFullYear() === date2.getFullYear() && date1.getMonth() === date2.getMonth()
 }
-

@@ -9,12 +9,13 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { X } from "lucide-react"
+import type { Profile, Article } from "@/types"
 
 interface CreateArticleModalProps {
   isOpen: boolean
   onClose: () => void
-  onArticleCreated: (article: any) => void
-  user: any
+  onArticleCreated: (article: Article) => void
+  user: Profile & { id: string }
 }
 
 export default function CreateArticleModal({ isOpen, onClose, onArticleCreated }: CreateArticleModalProps) {
@@ -171,4 +172,3 @@ export default function CreateArticleModal({ isOpen, onClose, onArticleCreated }
     </AnimatePresence>
   )
 }
-

@@ -1,6 +1,6 @@
 "use client"
 
-import { useRouter } from "next/navigation"
+
 import type { User } from "@supabase/supabase-js"
 import { motion, AnimatePresence } from "framer-motion"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
@@ -49,7 +49,7 @@ const createOrUpdateProfile = async (profileData: Partial<Profile>): Promise<Pro
 }
 
 export function AccountForm({ user, onClose }: { user: User; onClose: () => void }) {
-  const router = useRouter()
+  
   const queryClient = useQueryClient()
 
   const {
