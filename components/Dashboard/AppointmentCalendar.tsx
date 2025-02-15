@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import type { User } from "@supabase/supabase-js";
-import { Calendar, dateFnsLocalizer, NavigateAction } from "react-big-calendar";
+import { Calendar, dateFnsLocalizer} from "react-big-calendar";
 import { format, parse, startOfWeek, getDay, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns";
 import { enUS } from "date-fns/locale";
 import "react-big-calendar/lib/css/react-big-calendar.css";
