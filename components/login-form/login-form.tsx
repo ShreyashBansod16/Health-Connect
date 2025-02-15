@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -6,8 +6,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, SubmitHandler } from "react-hook-form";
 import Image from "next/image";
+
+// Define a type for form values
+interface FormValues {
+  email: string;
+  password: string;
+}
 
 export function LoginForm({
   login,
@@ -18,14 +24,15 @@ export function LoginForm({
 }) {
   const [isSignup, setIsSignup] = useState(false);
 
-  const form = useForm({
+  const form = useForm<FormValues>({
     defaultValues: {
       email: "",
       password: "",
     },
   });
 
-  const onSubmit = async (values: any) => {
+  // Define onSubmit with proper type
+  const onSubmit: SubmitHandler<FormValues> = async (values) => {
     const formData = new FormData();
     formData.append("email", values.email);
     formData.append("password", values.password);
@@ -38,8 +45,8 @@ export function LoginForm({
   };
 
   return (
-    <div className={cn("flex flex-col gap-6 p-4 sm:p-6 justify-center items-center ")}>
-      <Card className="overflow-hidden  bg-white dark:bg-gray-900 rounded-lg shadow w-full">
+    <div className={cn("flex flex-col gap-6 p-4 sm:p-6 justify-center items-center")}>
+      <Card className="overflow-hidden bg-white dark:bg-gray-900 rounded-lg shadow w-full">
         <CardContent className="grid p-0 md:grid-cols-2">
           <form
             onSubmit={form.handleSubmit(onSubmit)}

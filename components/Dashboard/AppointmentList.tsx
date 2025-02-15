@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Calendar, Clock, User } from "lucide-react";
+import { Calendar, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -28,25 +28,23 @@ export default function AppointmentList({ user }: AppointmentListProps) {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
 
   useEffect(() => {
-    fetchAppointments();
-  }, []);
-
-  const fetchAppointments = async () => {
-    try {
-      const response = await fetch(`/api/doctor ?userId=${user.id}`);
-      const data = await response.json();
-      if (response.ok) {
+    const fetchAppointments = async () => {
+      try {
+        const response = await fetch(`/api/doctor?userId=${user.id}`);
+        if (!response.ok) throw new Error("Failed to fetch");
+        const data = await response.json();
         setAppointments(data);
+      } catch (error) {
+        console.error("Failed to fetch appointments:", error);
       }
-    } catch (error) {
-      console.error("Failed to fetch appointments:", error);
-    }
-  };
+    };
+    fetchAppointments();
+  }, [user.id]);
 
   return (
     <ScrollArea className="h-[calc(100vh-200px)]">
       <div className="space-y-4">
-        {appointments && appointments.length > 0 ? (
+        {appointments.length > 0 ? (
           appointments.map((appointment) => (
             <Card key={appointment.id} className="flex items-center space-x-4 p-4">
               <Avatar className="h-12 w-12">

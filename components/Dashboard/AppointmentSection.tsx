@@ -147,9 +147,10 @@ export default function AppointmentSection({ user }: { user: User }) {
                 transition={{ duration: 0.3 }}
                 className="p-6 hidden lg:flex items-center justify-center h-full bg-white dark:bg-gray-800"
               >
-                <p className="text-xl text-gray-600 dark:text-gray-300">
-                  Click "Show Calendar" or "Book Appointment" to view content
-                </p>
+               <p className="text-xl text-gray-600 dark:text-gray-300">
+  Click &quot;Show Calendar&quot; or &quot;Book Appointment&quot; to view content
+</p>
+
               </motion.div>
             )}
           </CardContent>

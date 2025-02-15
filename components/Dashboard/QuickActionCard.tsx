@@ -1,73 +1,66 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useMemo } from "react"
-import { motion } from "framer-motion"
-import { CalendarDays, ClipboardList, Activity, FileText, ArrowRight } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
-import Link from "next/link"
-import { useQuery } from "@tanstack/react-query"
-import { startOfMonth, endOfMonth, isAfter, format, parseISO, compareAsc, isBefore } from "date-fns"
-import type { User } from "@supabase/supabase-js"
+import { useMemo } from "react";
+import { motion } from "framer-motion";
+import { CalendarDays, ClipboardList, Activity, FileText } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
+import { startOfMonth, endOfMonth, format, parseISO, compareAsc, isBefore, isAfter } from "date-fns";
+import type { User } from "@supabase/supabase-js";
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0 },
+};
+
+interface Appointment {
+  id: string;
+  date: string;
+  time: string;
+  doctor: { name: string };
+  start: Date; // Processed field
 }
 
-const fetchAppointments = async (userId: string, start: string, end: string) => {
-  const response = await fetch(`/api/doctor?userId=${userId}&start=${start}&end=${end}`)
+const fetchAppointments = async (userId: string, start: string, end: string): Promise<Appointment[]> => {
+  const response = await fetch(`/api/doctor?userId=${userId}&start=${start}&end=${end}`);
   if (!response.ok) {
-    throw new Error(`Error ${response.status}: ${response.statusText}`)
+    throw new Error(`Error ${response.status}: ${response.statusText}`);
   }
-  return response.json()
-}
+  const data = await response.json();
+  return data.map((appointment: { date: string; time: string; doctor: { name: string } }) => ({
+    ...appointment,
+    start: parseISO(`${appointment.date}T${appointment.time}`),
+  })).sort((a: { start: any; }, b: { start: any; }) => compareAsc(a.start, b.start));
+};
 
 interface QuickActionCardsProps {
-  user: User
+  user: User;
 }
 
 export default function QuickActionCards({ user }: QuickActionCardsProps) {
-  const today = new Date()
+  const today = useMemo(() => new Date(), []);
 
-  const { start, end } = useMemo(() => {
-    return {
-      start: startOfMonth(new Date(today.getFullYear(), today.getMonth() - 1)),
-      end: endOfMonth(new Date(today.getFullYear(), today.getMonth() + 1)),
-    }
-  }, [today])
+  const { start, end } = useMemo(() => ({
+    start: startOfMonth(new Date(today.getFullYear(), today.getMonth() - 1)),
+    end: endOfMonth(new Date(today.getFullYear(), today.getMonth() + 1)),
+  }), [today]);
 
-  const {
-    data: appointments,
-    isLoading,
-    isError,
-  } = useQuery({
+  const { data: appointments = [], isLoading, isError } = useQuery({
     queryKey: ["appointments", user.id, start.toISOString(), end.toISOString()],
     queryFn: () => fetchAppointments(user.id, start.toISOString(), end.toISOString()),
-    select: (data) =>
-      data
-        .map((appointment: any) => ({
-          ...appointment,
-          start: parseISO(`${appointment.date}T${appointment.time}`),
-        }))
-        .sort((a: any, b: any) => compareAsc(a.start, b.start)),
-  })
+  });
 
-  const upcomingAppointments = appointments?.filter((apt: any) => isAfter(apt.start, today)) || []
-  const nextAppointment = upcomingAppointments.length > 0 ? upcomingAppointments[0] : null
-  const pastAppointments = appointments?.filter((apt: any) => isBefore(apt.start, today)) || []
-  const lastAppointment = pastAppointments.length > 0 ? pastAppointments[pastAppointments.length - 1] : null
+  const upcomingAppointments = appointments.filter(apt => isAfter(apt.start, today));
+  const nextAppointment = upcomingAppointments.length > 0 ? upcomingAppointments[0] : null;
+  const pastAppointments = appointments.filter(apt => isBefore(apt.start, today));
+  const lastAppointment = pastAppointments.length > 0 ? pastAppointments[pastAppointments.length - 1] : null;
 
-  const healthStatus = "Good" // Replace with health status API call
-  const medicalRecordsCount = 8 // Replace with medical records API call
+  const healthStatus = "Good"; // Replace with API call
+  const medicalRecordsCount = 8; // Replace with API call
 
-  if (isLoading) {
-    return <div>Loading...</div>
-  }
-
-  if (isError) {
-    return <div>Error loading appointments</div>
-  }
+  if (isLoading) return <div>Loading...</div>;
+  if (isError) return <div>Error loading appointments</div>;
 
   return (
     <motion.section
@@ -113,15 +106,15 @@ export default function QuickActionCards({ user }: QuickActionCardsProps) {
         link="#"
       />
     </motion.section>
-  )
+  );
 }
 
 interface QuickActionCardProps {
-  title: string
-  value: string
-  icon: React.ReactNode
-  description: string
-  link: string
+  title: string;
+  value: string;
+  icon: React.ReactNode;
+  description: string;
+  link: string;
 }
 
 function QuickActionCard({ title, value, icon, description, link }: QuickActionCardProps) {
@@ -136,11 +129,9 @@ function QuickActionCard({ title, value, icon, description, link }: QuickActionC
             </div>
             <div className="text-3xl font-bold mb-2 text-gray-900 dark:text-gray-100">{value}</div>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 flex-grow">{description}</p>
-           
           </CardContent>
         </Card>
       </Link>
     </motion.div>
-  )
+  );
 }
-

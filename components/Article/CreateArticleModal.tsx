@@ -57,6 +57,7 @@ export default function CreateArticleModal({ isOpen, onClose, onArticleCreated }
         setError(data.error || "Failed to create article")
       }
     } catch (error) {
+      console.error("Failed to create article:", error)
       setError("An error occurred while creating the article")
     } finally {
       setIsSubmitting(false)
