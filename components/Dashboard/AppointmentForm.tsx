@@ -8,7 +8,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "react-hot-toast";
 import { Loader2 } from "lucide-react";
@@ -27,7 +26,7 @@ interface Appointment {
 }
 
 const fetchDoctors = async (): Promise<Doctor[]> => {
-  const response = await fetch("/api/appointment"); // ✅ Fixed typo
+  const response = await fetch("/api/appointmnet");
   if (!response.ok) throw new Error("Failed to fetch doctors");
   return response.json();
 };
@@ -48,7 +47,8 @@ export default function AppointmentForm({ user, onAppointmentBooked }: { user: U
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [doctorId, setDoctorId] = useState("");
-  const [searchQuery, setSearchQuery] = useState(""); // ✅ Now used in input field
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -109,6 +109,16 @@ export default function AppointmentForm({ user, onAppointmentBooked }: { user: U
     });
   };
 
+  const handleDoctorSelect = (doctor: Doctor) => {
+    setDoctorId(doctor.id);
+    setSearchQuery(doctor.name); // Fill the search input with the selected doctor’s name
+    setShowSuggestions(false); // Hide suggestions
+  };
+
+  const filteredDoctors = doctors.filter((doctor) =>
+    doctor.name.toLowerCase().startsWith(searchQuery.toLowerCase())
+  );
+
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="w-full max-w-md mx-auto">
       <Card className="shadow-lg bg-white dark:bg-gray-800">
@@ -120,31 +130,38 @@ export default function AppointmentForm({ user, onAppointmentBooked }: { user: U
           <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} min={format(startOfToday(), "yyyy-MM-dd")} />
 
           <Label>Time</Label>
-          <Select value={time} onValueChange={setTime}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select a time" />
-            </SelectTrigger>
-            <SelectContent>
-              {generateTimeSlots().map((slot) => (
-                <SelectItem key={slot} value={slot}>{slot}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <select className="w-full border p-2 rounded-md" value={time} onChange={(e) => setTime(e.target.value)}>
+            <option value="" disabled>Select a time</option>
+            {generateTimeSlots().map((slot) => (
+              <option key={slot} value={slot}>{slot}</option>
+            ))}
+          </select>
 
-          <Label>Search Doctor</Label> {/* ✅ Now search input is used */}
-          <Input type="text" placeholder="Search doctor..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+          <Label>Search Doctor</Label>
+          <Input 
+            type="text" 
+            placeholder="Search doctor..." 
+            value={searchQuery} 
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setShowSuggestions(true);
+            }}
+            onFocus={() => setShowSuggestions(true)}
+          />
 
-          <Label>Doctor</Label>
-          <Select value={doctorId} onValueChange={setDoctorId}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select a doctor" />
-            </SelectTrigger>
-            <SelectContent>
-              {doctors.filter((doctor) => doctor.name.toLowerCase().includes(searchQuery.toLowerCase())).map((doctor) => (
-                <SelectItem key={doctor.id} value={doctor.id}>{doctor.name} ({doctor.specialization})</SelectItem>
+          {showSuggestions && filteredDoctors.length > 0 && (
+            <ul className="bg-white border border-gray-300 rounded-md shadow-md mt-2 max-h-40 overflow-auto">
+              {filteredDoctors.map((doctor) => (
+                <li 
+                  key={doctor.id} 
+                  className="p-2 cursor-pointer hover:bg-gray-200"
+                  onClick={() => handleDoctorSelect(doctor)}
+                >
+                  {doctor.name} ({doctor.specialization})
+                </li>
               ))}
-            </SelectContent>
-          </Select>
+            </ul>
+          )}
 
           <Button onClick={handleBookAppointment} disabled={bookAppointmentMutation.isPending}>
             {bookAppointmentMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Book Appointment"}
