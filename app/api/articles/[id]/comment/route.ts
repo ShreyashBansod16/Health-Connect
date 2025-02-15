@@ -2,10 +2,13 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 // ✅ Correct type for dynamic route parameters
-export async function POST(request: Request,
-  { params }: { params: { id: string } }) {
+interface Context {
+  params: { id: string };
+}
+
+export async function POST(request: Request, context: Context) {
   try {
-    const { id } = params;
+    const { id } = context.params;
     const { content, userId } = await request.json();
 
     if (!content || !userId) {
@@ -52,14 +55,13 @@ export async function POST(request: Request,
   }
 }
 
-// ✅ Correct GET handler
-export async function GET( request: Request, { params }: { params: { id: string } }) {
-  console.log(request)
+// ✅ Fixed GET handler
+export async function GET(request: Request, context: Context) {
   try {
-    const { id: articleId } = await params;
+    const { id: articleId } = context.params; // ✅ Corrected
 
     const comments = await prisma.comment.findMany({
-      where: { articleId: articleId, parentId: null },
+      where: { articleId, parentId: null },
       include: {
         user: {
           select: {
