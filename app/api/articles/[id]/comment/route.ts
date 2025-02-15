@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function POST(
-  request: Request,
-  context: { params: { id: string } }
-) {
-  const { params } = context;
+// ✅ Fix: Extract `params` properly from `context`
+export async function POST(request: Request, { params }: { params: { id: string } }) {
   try {
     const { content, userId } = await request.json();
     console.log(content, userId);
@@ -31,7 +28,7 @@ export async function POST(
     const comment = await prisma.comment.create({
       data: {
         content,
-        articleId: params.id,
+        articleId: params.id, // ✅ Fix: Access params correctly
         userId: profile.userId,
       },
       include: {
@@ -54,11 +51,8 @@ export async function POST(
   }
 }
 
-export async function GET(
-  request: Request,
-  context: { params: { id: string } }
-) {
-  const { params } = context;
+// ✅ Fix: Correctly define function parameters for GET
+export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
     const comments = await prisma.comment.findMany({
       where: { 
