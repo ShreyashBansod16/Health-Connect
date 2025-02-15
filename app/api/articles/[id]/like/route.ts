@@ -7,7 +7,7 @@ export async function POST(
 ) {
   try {
     const { userId } = await request.json();
-    const { id: articleId } = params;
+    const { id: articleId } = await params;
 
     if (!userId) {
       return NextResponse.json(
@@ -64,13 +64,23 @@ export async function POST(
       });
     }
 
-    // Create new like (without storing it in a variable)
-    await prisma.like.create({
+    // Create new like
+    const newLike = await prisma.like.create({
       data: {
         articleId: articleId,
         userId: profile.userId,
       },
+      include: {
+        user: {
+          select: {
+            username: true,
+            avatarUrl: true,
+          },
+        },
+      },
     });
+    console.log("New like added:", newLike);
+
 
     // Get all likes including the new one
     const allLikes = await prisma.like.findMany({

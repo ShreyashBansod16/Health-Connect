@@ -30,6 +30,16 @@ interface Appointment {
   doctorName: string
 }
 
+// ✅ Define a new type that matches the API response
+interface FetchedAppointment {
+  id: string
+  date: string
+  time: string
+  doctor: {
+    name: string
+  }
+}
+
 const fetchAppointments = async (userId: string, start: string, end: string) => {
   const response = await fetch(`/api/doctor?userId=${userId}&start=${start}&end=${end}`)
   if (!response.ok) {
@@ -42,9 +52,7 @@ export default function AppointmentCalendar({ user }: { user: User }) {
   const [currentDate, setCurrentDate] = useState(new Date())
 
   const { start, end } = useMemo(() => {
-    const start = startOfMonth(currentDate)
-    const end = endOfMonth(currentDate)
-    return { start, end }
+    return { start: startOfMonth(currentDate), end: endOfMonth(currentDate) }
   }, [currentDate])
 
   const {
@@ -55,8 +63,8 @@ export default function AppointmentCalendar({ user }: { user: User }) {
   } = useQuery({
     queryKey: ["appointments", user.id, start.toISOString(), end.toISOString()],
     queryFn: () => fetchAppointments(user.id, start.toISOString(), end.toISOString()),
-    select: (data) =>
-      data.map((appointment: any) => ({
+    select: (data: FetchedAppointment[]) =>
+      data.map((appointment) => ({
         id: appointment.id,
         title: `Appointment with Dr. ${appointment.doctor.name}`,
         start: new Date(`${appointment.date}T${appointment.time}`),
@@ -70,55 +78,46 @@ export default function AppointmentCalendar({ user }: { user: User }) {
     setCurrentDate(newDate)
   }
 
-  const CustomToolbar = ({ onNavigate, label }: any) => {
-    return (
-      <div className="flex justify-between items-center mb-4 sm:mb-6 py-2 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex space-x-1 sm:space-x-2">
-          <button
-            onClick={() => {
-              onNavigate("PREV")
-              handleNavigate(subMonths(currentDate, 1))
-            }}
-            className="p-1 sm:p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
-          >
-            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-          </button>
-          <button
-            onClick={() => {
-              onNavigate("NEXT")
-              handleNavigate(addMonths(currentDate, 1))
-            }}
-            className="p-1 sm:p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
-          >
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
-          </button>
-        </div>
-        <div className="text-center">
-          <span className="text-base sm:text-xl font-bold text-gray-800 dark:text-gray-200">
-            {format(currentDate, "MMMM yyyy")}
-          </span>
-        </div>
+  const CustomToolbar = ({ onNavigate, label }: any) => (
+    <div className="flex justify-between items-center mb-4 sm:mb-6 py-2 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex space-x-1 sm:space-x-2">
         <button
           onClick={() => {
-            handleNavigate(new Date())
+            onNavigate("PREV")
+            handleNavigate(subMonths(currentDate, 1))
           }}
-          className="px-2 py-1 sm:px-4 sm:py-2 text-sm sm:text-base bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors duration-200"
+          className="p-1 sm:p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
         >
-          Today
+          <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+        </button>
+        <button
+          onClick={() => {
+            onNavigate("NEXT")
+            handleNavigate(addMonths(currentDate, 1))
+          }}
+          className="p-1 sm:p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
+        >
+          <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
       </div>
-    )
-  }
+      <div className="text-center">
+        <span className="text-base sm:text-xl font-bold text-gray-800 dark:text-gray-200">
+          {format(currentDate, "MMMM yyyy")}
+        </span>
+      </div>
+      <button
+        onClick={() => handleNavigate(new Date())}
+        className="px-2 py-1 sm:px-4 sm:py-2 text-sm sm:text-base bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors duration-200"
+      >
+        Today
+      </button>
+    </div>
+  )
 
-  const eventStyleGetter = (event: Appointment) => {
-    return {
-      style: {
-        backgroundColor: "transparent",
-        border: "none",
-      },
-      className: "bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-md px-2 py-1",
-    }
-  }
+  const eventStyleGetter = (event: Appointment) => ({
+    style: { backgroundColor: "transparent", border: "none" },
+    className: "bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-md px-2 py-1",
+  })
 
   return (
     <motion.div
@@ -166,20 +165,14 @@ export default function AppointmentCalendar({ user }: { user: User }) {
   )
 }
 
-const CustomHeader = ({ date, label }: { date: Date; label: string }) => (
+const CustomHeader = ({ label }: { label: string }) => (
   <div className="text-center py-1 sm:py-2 font-semibold text-xs sm:text-sm uppercase text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700">
     {label}
   </div>
 )
 
 const CustomDateHeader = ({ date, label }: { date: Date; label: string }) => (
-  <div
-    className={`text-center p-1 text-xs sm:text-sm ${
-      isSameMonth(date, new Date())
-        ? "font-semibold text-gray-800 dark:text-gray-400"
-        : "text-gray-400 dark:text-gray-600"
-    }`}
-  >
+  <div className={`text-center p-1 text-xs sm:text-sm ${isSameMonth(date, new Date()) ? "font-semibold text-gray-800 dark:text-gray-400" : "text-gray-400 dark:text-gray-600"}`}>
     {label}
   </div>
 )
@@ -187,4 +180,3 @@ const CustomDateHeader = ({ date, label }: { date: Date; label: string }) => (
 function isSameMonth(date1: Date, date2: Date) {
   return date1.getFullYear() === date2.getFullYear() && date1.getMonth() === date2.getMonth()
 }
-

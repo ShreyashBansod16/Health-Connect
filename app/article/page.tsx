@@ -4,7 +4,7 @@ import ArticleSection from "@/components/Article/ArticleSection"
 import prisma from "@/utils/prisma"
 import DashboardHeader from "@/components/Dashboard/DashboardHeader"
 import MobileMenu from "@/components/Dashboard/MobileMenu"
-import MobileTabsWrapper from "@/components/Dashboard/MobileNAvigation"
+
 import { Toaster } from "react-hot-toast"
 
 export default async function Home() {
