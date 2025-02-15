@@ -52,7 +52,7 @@ export async function POST(
     );
   }
 }
-
+//@ts-ignore
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
