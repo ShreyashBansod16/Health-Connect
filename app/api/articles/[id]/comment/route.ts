@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// ✅ Fix: Extract `params` properly from `context`
+// ✅ Fix: Use `params` correctly in Next.js App Router
 export async function POST(request: Request, { params }: { params: { id: string } }) {
   try {
     const { content, userId } = await request.json();
-    console.log(content, userId);
 
     if (!content || !userId) {
       return NextResponse.json(
@@ -28,7 +27,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
     const comment = await prisma.comment.create({
       data: {
         content,
-        articleId: params.id, // ✅ Fix: Access params correctly
+        articleId: params.id,
         userId: profile.userId,
       },
       include: {
@@ -51,8 +50,11 @@ export async function POST(request: Request, { params }: { params: { id: string 
   }
 }
 
-// ✅ Fix: Correctly define function parameters for GET
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+// ✅ Fix: Correctly define GET parameters
+export async function GET(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     const comments = await prisma.comment.findMany({
       where: { 
@@ -68,7 +70,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
         },
       },
       orderBy: { 
-        createdAt: 'desc' 
+        createdAt: "desc",
       },
     });
 
