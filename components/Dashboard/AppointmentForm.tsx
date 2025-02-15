@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import type { User } from "@supabase/supabase-js";
 import { format, addMinutes, isBefore, startOfToday, parseISO, set } from "date-fns";
 import { motion } from "framer-motion";
@@ -55,14 +55,10 @@ export default function AppointmentForm({
   const [time, setTime] = useState("");
   const [doctorId, setDoctorId] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const queryClient = useQueryClient();
 
-  const { data: doctors, isLoading: isDoctorsLoading } = useQuery<Doctor[], Error>({
-    queryKey: ["doctors"],
-    queryFn: fetchDoctors,
-  });
+  useQuery<Doctor[], Error>({ queryKey: ["doctors"], queryFn: fetchDoctors });
 
   const bookAppointmentMutation = useMutation<Appointment, Error, Appointment>({
     mutationFn: bookAppointment,
@@ -75,23 +71,6 @@ export default function AppointmentForm({
       toast.error("Failed to book appointment. Please try again.");
     },
   });
-
-  const filteredDoctors =
-    doctors?.filter((doctor: Doctor) => doctor.name.toLowerCase().includes(searchQuery.toLowerCase())) || [];
-
-  const handleDoctorSelect = (doctor: Doctor) => {
-    setDoctorId(doctor.id);
-    setSearchQuery(doctor.name);
-    setShowSuggestions(false);
-  };
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-    setShowSuggestions(true);
-    if (e.target.value === "") {
-      setDoctorId("");
-    }
-  };
 
   const generateTimeSlots = useCallback(() => {
     const slots = [];
@@ -157,8 +136,8 @@ export default function AppointmentForm({
           </Select>
 
           <Label>Doctor</Label>
-          <Input type="text" placeholder="Search for a doctor" value={searchQuery} onChange={handleSearchChange} onFocus={() => setShowSuggestions(true)} />
-          
+          <Input type="text" placeholder="Search for a doctor" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+
           <Button onClick={handleBookAppointment} disabled={bookAppointmentMutation.isPending}>
             {bookAppointmentMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Book Appointment"}
           </Button>

@@ -14,24 +14,34 @@ const cardVariants = {
   visible: { opacity: 1, y: 0 },
 };
 
+interface Doctor {
+  name: string;
+}
+
 interface Appointment {
   id: string;
   date: string;
   time: string;
-  doctor: { name: string };
-  start: Date; // Processed field
+  doctor: Doctor;
+  start: Date;
 }
 
-const fetchAppointments = async (userId: string, start: string, end: string): Promise<Appointment[]> => {
+const fetchAppointments = async (
+  userId: string,
+  start: string,
+  end: string
+): Promise<Appointment[]> => {
   const response = await fetch(`/api/doctor?userId=${userId}&start=${start}&end=${end}`);
   if (!response.ok) {
     throw new Error(`Error ${response.status}: ${response.statusText}`);
   }
-  const data = await response.json();
-  return data.map((appointment: { date: string; time: string; doctor: { name: string } }) => ({
-    ...appointment,
-    start: parseISO(`${appointment.date}T${appointment.time}`),
-  })).sort((a: { start: any; }, b: { start: any; }) => compareAsc(a.start, b.start));
+  const data: { id: string; date: string; time: string; doctor: Doctor }[] = await response.json();
+  return data
+    .map((appointment) => ({
+      ...appointment,
+      start: parseISO(`${appointment.date}T${appointment.time}`),
+    }))
+    .sort((a, b) => compareAsc(a.start, b.start));
 };
 
 interface QuickActionCardsProps {
@@ -41,23 +51,26 @@ interface QuickActionCardsProps {
 export default function QuickActionCards({ user }: QuickActionCardsProps) {
   const today = useMemo(() => new Date(), []);
 
-  const { start, end } = useMemo(() => ({
-    start: startOfMonth(new Date(today.getFullYear(), today.getMonth() - 1)),
-    end: endOfMonth(new Date(today.getFullYear(), today.getMonth() + 1)),
-  }), [today]);
+  const { start, end } = useMemo(
+    () => ({
+      start: startOfMonth(new Date(today.getFullYear(), today.getMonth() - 1)),
+      end: endOfMonth(new Date(today.getFullYear(), today.getMonth() + 1)),
+    }),
+    [today]
+  );
 
   const { data: appointments = [], isLoading, isError } = useQuery({
     queryKey: ["appointments", user.id, start.toISOString(), end.toISOString()],
     queryFn: () => fetchAppointments(user.id, start.toISOString(), end.toISOString()),
   });
 
-  const upcomingAppointments = appointments.filter(apt => isAfter(apt.start, today));
+  const upcomingAppointments = appointments.filter((apt) => isAfter(apt.start, today));
   const nextAppointment = upcomingAppointments.length > 0 ? upcomingAppointments[0] : null;
-  const pastAppointments = appointments.filter(apt => isBefore(apt.start, today));
+  const pastAppointments = appointments.filter((apt) => isBefore(apt.start, today));
   const lastAppointment = pastAppointments.length > 0 ? pastAppointments[pastAppointments.length - 1] : null;
 
-  const healthStatus = "Good"; // Replace with API call
-  const medicalRecordsCount = 8; // Replace with API call
+  const healthStatus = "Good";
+  const medicalRecordsCount = 8;
 
   if (isLoading) return <div>Loading...</div>;
   if (isError) return <div>Error loading appointments</div>;

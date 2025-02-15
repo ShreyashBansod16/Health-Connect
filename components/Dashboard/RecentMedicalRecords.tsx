@@ -15,6 +15,7 @@ interface MedicalRecord {
 
 // Mock function to fetch medical records (replace with real API call)
 const fetchMedicalRecords = async (userId: string): Promise<MedicalRecord[]> => {
+  console.log("Fetching medical records for user:", userId);
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve([
