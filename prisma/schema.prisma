@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Profile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  fullName  String?
+  username  String   @unique
+  website   String?
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  medicalRecords MedicalRecord[]
+  articles   Article[]    // Relation to articles authored
+  likes      Like[]       // Relation to article likes
+  comments   Comment[]    // Relation to article comments
+}
+
+model Doctor {
+  id             String   @id @default(uuid())
+  name           String
+  specialization String
+  appointments   Appointment[]
+  medicalRecords MedicalRecord[]
+}
+
+model Appointment {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  date      DateTime
+  time      String
+  doctorId  String
+  doctor    Doctor   @relation(fields: [doctorId], references: [id])
+}
+
+model MedicalRecord {
+  id          String   @id @default(uuid())
+  date        DateTime
+  title       String
+  description String
+  userId      String
+  doctorId    String
+  profile     Profile  @relation(fields: [userId], references: [userId])
+  doctor      Doctor   @relation(fields: [doctorId], references: [id])
+}
+
+model Article {
+  id          String      @id @default(uuid())
+  title       String
+  content     String      @db.Text
+  excerpt     String
+  author      Profile     @relation(fields: [authorId], references: [userId])
+  authorId    String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  category    String
+  image       String?
+  likes       Like[]
+  comments    Comment[]
+  views       Int         @default(0)
+  isPublished Boolean     @default(true)
+  tags        String[]
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  article   Article  @relation(fields: [articleId], references: [id])
+  articleId String
+  user      Profile  @relation(fields: [userId], references: [userId])
+  userId    String
+  createdAt DateTime @default(now())
+
+  @@unique([articleId, userId])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  article   Article  @relation(fields: [articleId], references: [id])
+  articleId String
+  user      Profile  @relation(fields: [userId], references: [userId])
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  parentId  String?  @map("parent_id")
+  parent    Comment? @relation("CommentToComment", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies   Comment[] @relation("CommentToComment")
+}
