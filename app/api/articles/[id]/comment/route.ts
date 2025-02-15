@@ -56,10 +56,10 @@ export async function POST(request: Request,
 export async function GET( request: Request, { params }: { params: { id: string } }) {
   console.log(request)
   try {
-    const { id } = params;
+    const { id: articleId } = await params;
 
     const comments = await prisma.comment.findMany({
-      where: { articleId: id, parentId: null },
+      where: { articleId: articleId, parentId: null },
       include: {
         user: {
           select: {
