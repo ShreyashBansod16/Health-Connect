@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client"; // Import Prisma types
+import { Prisma } from "@prisma/client";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -9,7 +9,6 @@ export async function GET(request: Request) {
   const limit = parseInt(searchParams.get("limit") || "10", 10);
   const category = searchParams.get("category") || "";
 
-  // Build the WHERE condition dynamically
   const where: Prisma.ArticleWhereInput = {
     AND: [
       {
@@ -18,7 +17,7 @@ export async function GET(request: Request) {
           { content: { contains: search, mode: "insensitive" } },
         ],
       },
-      ...(category ? [{ category }] : []), // Conditionally add category filter
+      ...(category ? [{ category }] : []),
     ],
   };
 
@@ -41,4 +40,32 @@ export async function GET(request: Request) {
   const total = await prisma.article.count({ where });
 
   return NextResponse.json({ articles, total });
+}
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { title, excerpt, content, category, image, tags, authorId } = body;
+console.log(authorId)
+    if (!title || !excerpt || !content || !category || !authorId) {
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    const newArticle = await prisma.article.create({
+      data: {
+        title,
+        excerpt,
+        content,
+        category,
+        image,
+        tags,
+        authorId, // Correctly using userId from request body
+      },
+    });
+
+    return NextResponse.json({ data: newArticle }, { status: 201 });
+  } catch (error) {
+    console.error("Error creating article:", error);
+    return NextResponse.json({ error: "Failed to create article" }, { status: 500 });
+  }
 }

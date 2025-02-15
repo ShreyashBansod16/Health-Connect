@@ -18,7 +18,7 @@ interface CreateArticleModalProps {
   user: Profile & { id: string }
 }
 
-export default function CreateArticleModal({ isOpen, onClose, onArticleCreated }: CreateArticleModalProps) {
+export default function CreateArticleModal({ isOpen, onClose, onArticleCreated, user }: CreateArticleModalProps) {
   const [formData, setFormData] = useState({
     title: "",
     excerpt: "",
@@ -37,6 +37,7 @@ export default function CreateArticleModal({ isOpen, onClose, onArticleCreated }
     setError("")
 
     try {
+      console.log("user.id: ", user.userId)
       const response = await fetch("/api/articles", {
         method: "POST",
         headers: {
@@ -45,6 +46,7 @@ export default function CreateArticleModal({ isOpen, onClose, onArticleCreated }
         body: JSON.stringify({
           ...formData,
           tags: formData.tags.split(",").map((tag) => tag.trim()),
+          authorId: user.userId,
         }),
       })
 

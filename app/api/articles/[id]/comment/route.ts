@@ -1,14 +1,14 @@
-//@ts-nocheck
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+// Handle POST request to add a comment
 export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  request: Request,
+  { params }: { params: { id: string } } // ✅ Corrected context destructuring
 ) {
   try {
-    const { id } = params;
     const { content, userId } = await request.json();
+    console.log("Received content:", content, "User ID:", userId);
 
     if (!content || !userId) {
       return NextResponse.json(
@@ -17,6 +17,7 @@ export async function POST(
       );
     }
 
+    // Check if the user profile exists
     const profile = await prisma.profile.findUnique({
       where: { userId },
     });
@@ -28,10 +29,11 @@ export async function POST(
       );
     }
 
+    // Create a new comment
     const comment = await prisma.comment.create({
       data: {
         content,
-        articleId: id,
+        articleId: params.id, // ✅ Using correctly destructured params
         userId: profile.userId,
       },
       include: {
@@ -53,16 +55,24 @@ export async function POST(
     );
   }
 }
-//@ts-ignore
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const { id: articleId } = params;
 
+// Handle GET request to fetch comments for an article
+
+export async function GET(
+  request: Request,
+
+  { params }: { params: { id: string } } // ✅ Corrected context destructuring
+) {
+  console.log("GET request received for article:", params.id);
+
+
+
+  try {
     const comments = await prisma.comment.findMany({
-      where: { articleId, parentId: null },
+      where: { 
+        articleId: params.id,
+        parentId: null, 
+      },
       include: {
         user: {
           select: {
@@ -71,7 +81,9 @@ export async function GET(
           },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { 
+        createdAt: "desc",
+      },
     });
 
     return NextResponse.json({ success: true, data: comments });
