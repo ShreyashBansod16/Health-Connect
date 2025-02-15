@@ -1,13 +1,20 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function POST(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+// Handle POST request to like/unlike an article
+export async function POST(request: Request) {
+  const url = new URL(request.url);
+  const articleId = url.searchParams.get('id');
+
+  if (!articleId) {
+    return NextResponse.json(
+      { success: false, error: "Article ID is required" },
+      { status: 400 }
+    );
+  }
+
   try {
     const { userId } = await request.json();
-    const { id: articleId } = await params;
 
     if (!userId) {
       return NextResponse.json(
@@ -30,7 +37,7 @@ export async function POST(
     // Check if the user has already liked the article
     const existingLike = await prisma.like.findFirst({
       where: {
-        articleId: articleId,
+        articleId,
         userId: profile.userId,
       },
     });
@@ -45,7 +52,7 @@ export async function POST(
 
       // Get updated likes count
       const updatedLikes = await prisma.like.findMany({
-        where: { articleId: articleId },
+        where: { articleId },
         include: {
           user: {
             select: {
@@ -67,7 +74,7 @@ export async function POST(
     // Create new like
     const newLike = await prisma.like.create({
       data: {
-        articleId: articleId,
+        articleId,
         userId: profile.userId,
       },
       include: {
@@ -81,10 +88,9 @@ export async function POST(
     });
     console.log("New like added:", newLike);
 
-
     // Get all likes including the new one
     const allLikes = await prisma.like.findMany({
-      where: { articleId: articleId },
+      where: { articleId },
       include: {
         user: {
           select: {

@@ -1,35 +1,118 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import prisma from "@/utils/prisma"; // Adjust path as per your project structure
+import { NextResponse } from "next/server"
+import prisma from "@/utils/prisma"
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === "GET") {
-    try {
-      const { userId } = req.query;
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url)
+  const userId = searchParams.get("userId")
+  const start = searchParams.get("start")
+  const end = searchParams.get("end")
 
-      if (!userId || typeof userId !== "string") {
-        return res.status(400).json({ error: "User ID is required and must be a string" });
-      }
+  if (!userId) {
+    return NextResponse.json({ error: "Missing userId parameter" }, { status: 400 })
+  }
 
-      // Fetch appointments for the given user ID
-      const appointments = await prisma.appointment.findMany({
-        where: { userId },
-        select: {
-          date: true,  // Select only the `date` field for now
+  try {
+    const query = {
+      where: {
+        userId: userId,
+        ...(start && end
+          ? {
+              date: {
+                gte: new Date(start),
+                lte: new Date(end),
+              },
+            }
+          : {}),
+      },
+      include: {
+        doctor: {
+          select: {
+            name: true,
+            specialization: true,
+          },
         },
-      });
-
-      // Map and format dates to ISO strings
-      const formattedAppointments = appointments.map((appointment) => ({
-        date: appointment.date.toString(),
-      }));
-
-      return res.status(200).json(formattedAppointments);
-    } catch (error) {
-      console.error("Error fetching appointments:", error);
-      return res.status(500).json({ error: "Failed to fetch appointments" });
+      },
     }
-  } else {
-    return res.status(405).json({ error: "Method not allowed" });
+
+    const appointments = await prisma.appointment.findMany(query)
+
+    const formattedAppointments = appointments.map((appointment) => ({
+      id: appointment.id,
+      date: appointment.date.toISOString().split("T")[0],
+      time: appointment.time,
+      doctor: {
+        id: appointment.doctorId,
+        name: appointment.doctor.name,
+        specialization: appointment.doctor.specialization,
+      },
+    }))
+
+    return NextResponse.json(formattedAppointments)
+  } catch (error) {
+    console.error("Error fetching appointments:", error)
+    return NextResponse.json({ error: "Failed to fetch appointments" }, { status: 500 })
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json()
+    const { userId, date, time, doctorId } = body
+
+    // Validate required fields
+    if (!userId || !date || !time || !doctorId) {
+      return NextResponse.json(
+        {
+          error: "Missing required fields",
+          required: ["userId", "date", "time", "doctorId"],
+        },
+        { status: 400 },
+      )
+    }
+
+    // Validate doctor exists
+    const doctorExists = await prisma.doctor.findUnique({
+      where: { id: doctorId },
+    })
+
+    if (!doctorExists) {
+      return NextResponse.json({ error: "Doctor not found" }, { status: 404 })
+    }
+
+    // Create appointment
+    const appointment = await prisma.appointment.create({
+      data: {
+        userId,
+        date: new Date(date),
+        time,
+        doctorId,
+      },
+      include: {
+        doctor: {
+          select: {
+            name: true,
+            specialization: true,
+          },
+        },
+      },
+    })
+
+    return NextResponse.json({
+      id: appointment.id,
+      date: appointment.date.toISOString().split("T")[0],
+      time: appointment.time,
+      doctor: {
+        id: appointment.doctorId,
+        name: appointment.doctor.name,
+        specialization: appointment.doctor.specialization,
+      },
+    })
+  } catch (error) {
+    console.error("Error creating appointment:", error)
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+    return NextResponse.json({ error: "Failed to create appointment" }, { status: 500 })
   }
 }
 

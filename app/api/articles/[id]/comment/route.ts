@@ -1,11 +1,18 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// Handle POST request to add a comment
-export async function POST(
-  request: Request,
-  { params }: { params: { id: string } } // ✅ Corrected context destructuring
-) {
+
+export async function POST(request: Request) {
+  const url = new URL(request.url);
+  const articleId = url.searchParams.get('id');
+
+  if (!articleId) {
+    return NextResponse.json(
+      { success: false, error: "Article ID is required" },
+      { status: 400 }
+    );
+  }
+
   try {
     const { content, userId } = await request.json();
     console.log("Received content:", content, "User ID:", userId);
@@ -33,7 +40,7 @@ export async function POST(
     const comment = await prisma.comment.create({
       data: {
         content,
-        articleId: params.id, // ✅ Using correctly destructured params
+        articleId,
         userId: profile.userId,
       },
       include: {
@@ -56,22 +63,25 @@ export async function POST(
   }
 }
 
-// Handle GET request to fetch comments for an article
 
-export async function GET(
-  request: Request,
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const articleId = url.searchParams.get('id');
 
-  { params }: { params: { id: string } } // ✅ Corrected context destructuring
-) {
-  console.log("GET request received for article:", params.id);
+  if (!articleId) {
+    return NextResponse.json(
+      { success: false, error: "Article ID is required" },
+      { status: 400 }
+    );
+  }
 
-
+  console.log("GET request received for article:", articleId);
 
   try {
     const comments = await prisma.comment.findMany({
       where: { 
-        articleId: params.id,
-        parentId: null, 
+        articleId,
+        parentId: null,
       },
       include: {
         user: {
@@ -81,7 +91,7 @@ export async function GET(
           },
         },
       },
-      orderBy: { 
+      orderBy: {
         createdAt: "desc",
       },
     });
