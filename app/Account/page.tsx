@@ -5,6 +5,8 @@ import MobileMenu from "@/components/Dashboard/MobileMenu"
 import MobileTabsWrapper from "@/components/Dashboard/MobileNAvigation"
 import { Toaster } from "react-hot-toast"
 import { redirect } from "next/navigation"
+import prisma from "@/utils/prisma"
+import AccountForm from "./account-form"
 
 export default async function PatientDashboard() {
   const supabase = await createClient()
@@ -15,6 +17,21 @@ export default async function PatientDashboard() {
   if (!user) {
     redirect("/login")
   }
+  const profile = await prisma.profile.findUnique({
+    where: {
+      userId: user.id,
+    },
+  })
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
+        <AccountForm user={user} />
+      </div>
+    )
+  }
+
+  
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
